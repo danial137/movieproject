@@ -3,10 +3,11 @@ import { useState } from 'react';
 import { dummyTrailers } from '../assets/assets'
 import BlurCircle from '../components/BlurCircle'
 import ReactPlayer from 'react-player'
+import { PlayCircleIcon } from 'lucide-react';
 const TrailersSection = () => {
 
 
-    const [currentTrailer, setCurrentTrailer] = useState(dummyTrailers[1]);
+    const [currentTrailer, setCurrentTrailer] = useState(dummyTrailers[0]);
     
 
   return (
@@ -18,7 +19,7 @@ const TrailersSection = () => {
           <div className='relative mt-6'>
               <BlurCircle top='-100px' right='-100px' />
               <ReactPlayer
-                  url={currentTrailer.videoUrl}
+                  src={currentTrailer.videoUrl}
                   controls={true}
                   width="960px"
                   height="540px"
@@ -31,7 +32,8 @@ const TrailersSection = () => {
               
               {dummyTrailers.map((trailer) => (
                   <div>
-                      <img src={trailer.image} alt="tralier" />
+                      <img src={trailer.image} alt="tralier" className='rounded-lg w-full h-full object-cover brightness-75' />
+                      <PlayCircleIcon strokeWidth={1.6}/>
                   </div>
               ))}
               
