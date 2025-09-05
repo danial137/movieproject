@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react'
-import { dummyShowsData, dummyDateTimeData, assets } from '../assets/assets'
+import { dummyShowsData, dummyDateTimeData } from '../assets/assets'
 import { useParams } from 'react-router-dom'
 import BlurCircle from '../components/BlurCircle'
 import { Heart, PlayCircle, StarIcon } from 'lucide-react'
 import timeFormat from '../lib/timeFormat'
+import DateSelect from '../components/DateSelect'
 const MovieDetails = () => {
   const { id } = useParams()
   const [show, setShow] = useState(null)
@@ -53,7 +54,10 @@ const MovieDetails = () => {
             <button className='flex items-center gap-2 px-7 py-3 text-sm bg-gray-800 hover:bg-gray-900 transition rounded-md font-medium cursor-pointer active:scale-95'>
               <PlayCircle className='w-5 h-5' />
               Watch Trailers</button>
-            <a href="" className='px-10 py-3 text-sm bg-primary hover:bg-primary-dull transition rounded-md font-medium cursor-pointer active:scale-95' >Buy Tickects</a>
+            <a href="#dateSelect" className='px-10 py-3 text-sm bg-primary hover:bg-primary-dull transition rounded-md font-medium cursor-pointer active:scale-95'>
+              Buy Tickets
+            </a>
+
             <button className='bg-gray-700 p-2.5 rounded-full transition cursor-pointer active:scale-95'>
               <Heart className={`w-5 h-5`} />
             </button>
@@ -65,6 +69,19 @@ const MovieDetails = () => {
         </div>
       </div>
 
+      <p className='text-lg font-medium mt-20'>Your Favorit cast</p>
+
+      <div className='overflow-auto no-scrollbar mt-8 pb-4'>
+        <div className='flex items-center gap-4 w-max px-4'>
+          {show.movie.casts.slice(0, 12).map((cast, index) => {
+            return <div key={index} className='flex flex-col items-center text-center'>
+              <img src={cast.profile_path} alt="" className='rounded-full h-20 md:h-20 aspect-square object-cover' />
+              <p className='font-medium text-xs mt-3'>{cast.name}</p>
+            </div>
+          })}
+        </div>
+      </div>
+      <DateSelect dateTime={show.dateTime} id={id}/>
     </div>
   ) : <div>Loading...</div>
 }
