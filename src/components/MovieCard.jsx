@@ -22,12 +22,18 @@ const MovieCard = ({ movie }) => {
                 {(movie.genres?.slice(0, 2) || []).map(gener => gener.name).join(" | ")} . {timeFormat(movie.runtime)}
             </p>
 
-            <div className='flex items-center justify-between mt-4 pb-3'>
+            <div className='flex items-center justify-between mt-4 pb-3 gap-1'>
                 <button
                     onClick={() => { navigate(`/movies/${movie.id}`); scrollTo(0, 0) }}
                     className='px-4 py-2 text-xs bg-primary hover:bg-primary-dull transition rounded-full font-medium cursor-pointer'
                 >
                     Buy Tickets
+                </button>
+                <button
+                    onClick={() => { navigate(`/movies/${movie.id}`); scrollTo(0, 0) }}
+                    className='px-4 py-2 text-xs bg-primary hover:bg-primary-dull transition rounded-full font-medium cursor-pointer'
+                >
+                    Download
                 </button>
 
                 <p className='flex items-center gap-1 text-sm text-gray-400 mt-1 pr-1'>
