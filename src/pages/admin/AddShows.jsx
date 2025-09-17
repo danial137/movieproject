@@ -68,8 +68,11 @@ const AddShows = () => {
 
 
   useEffect(() => {
-    fetchNowPlayingMovies();
-  }, [])
+    if (user) {
+      fetchNowPlayingMovies()
+    }
+  
+  }, [user])
 
 
 
