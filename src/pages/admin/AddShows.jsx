@@ -4,6 +4,7 @@ import Loading from '../../components/Loading'
 import Title from './Title'
 import { kConvert } from '../../lib/kConvert'
 import { useAppContext } from '../../context/AppContext'
+import toast from 'react-hot-toast'
 
 const AddShows = () => {
   const { axios, getToken, user, image_base_url } = useAppContext()
@@ -14,6 +15,7 @@ const AddShows = () => {
   const [dateTimeSelection, setDateTimeSelection] = useState({})
   const [dateTimeInput, setDateTimeInput] = useState("")
   const [showPrice, setShowPrice] = useState("")
+  const [addingShow, setAddingShow] = useState(false)
 
   const fetchNowPlayingMovies = async () => {
     try {
@@ -50,6 +52,41 @@ const AddShows = () => {
       return { ...prev, [date]: filteredTime }
     })
   }
+
+
+  const handleSubmit = async () => {
+    try {
+      setAddingShow(true)
+      if (!selectedMovie || Object.keys(dateTimeSelection).length === 0 || !showPrice) {
+        return toast('missing required fields')
+      }
+      const showsInput = Object.entries(dateTimeSelection).map(([date, time]) => (
+        { date, time }
+      ));
+      const payload = {
+        movieId: selectedMovie,
+        showsInput,
+        showPrice: Number(showPrice)
+
+      }
+      const { data } = axios.post('/api/show/add', payload, { headers: { Authorization: `Bearer ${await getToken()}` } })
+      if (data.success) {
+        toast.success(data.message)
+        setSelectedMovie(null)
+        setDateTimeSelection({})
+        setShowPrice("")
+      } else {
+        toast.error(data.message)
+      }
+    } catch (error) {
+      console.error("sumbission error:", error)
+      toast.error('try again')
+    }
+
+    setAddingShow(false)
+  }
+
+
 
   useEffect(() => {
     if (user) fetchNowPlayingMovies()
@@ -158,7 +195,7 @@ const AddShows = () => {
         </div>
       )}
 
-      <button className='bg-primary text-white px-8 py-2 mt-6 rounded hover:bg-primary/90 w-full sm:w-auto transition-all'>
+      <button onClick={handleSubmit} disabled={addingShow} className='bg-primary text-white px-8 py-2 mt-6 rounded hover:bg-primary/90 w-full sm:w-auto transition-all'>
         Add Show
       </button>
     </>
