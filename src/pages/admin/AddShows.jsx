@@ -17,6 +17,7 @@ const AddShows = () => {
   const [showPrice, setShowPrice] = useState("")
   const [addingShow, setAddingShow] = useState(false)
 
+  // Fetch now playing movies
   const fetchNowPlayingMovies = async () => {
     try {
       const { data } = await axios.get('/api/show/now-playing', {
@@ -24,10 +25,16 @@ const AddShows = () => {
       })
       if (data.success) setNowPlayingMovies(data.movies)
     } catch (error) {
-      console.error('Error fetching movie', error)
+      console.error('Error fetching movies:', error)
+      toast.error('Failed to fetch movies')
     }
   }
 
+  useEffect(() => {
+    if (user) fetchNowPlayingMovies()
+  }, [user])
+
+  // Add date-time
   const handleDateTimeAdd = () => {
     if (!dateTimeInput) return
     const [date, time] = dateTimeInput.split('T')
@@ -40,8 +47,10 @@ const AddShows = () => {
       }
       return prev
     })
+    setDateTimeInput("")
   }
 
+  // Remove selected time
   const handleRemoveTime = (date, time) => {
     setDateTimeSelection((prev) => {
       const filteredTime = prev[date].filter((t) => t !== time)
@@ -53,23 +62,31 @@ const AddShows = () => {
     })
   }
 
-
+  // Submit show
   const handleSubmit = async () => {
+    setAddingShow(true)
+    if (!selectedMovie || Object.keys(dateTimeSelection).length === 0 || !showPrice) {
+      toast('Missing required fields')
+      setAddingShow(false)
+      return
+    }
+
     try {
-      setAddingShow(true)
-      if (!selectedMovie || Object.keys(dateTimeSelection).length === 0 || !showPrice) {
-        return toast('missing required fields')
-      }
-      const showsInput = Object.entries(dateTimeSelection).map(([date, time]) => (
-        { date, time }
-      ));
+      // Flatten date-time selection
+      const showsInput = Object.entries(dateTimeSelection).flatMap(([date, times]) =>
+        times.map(time => ({ date, time }))
+      )
+
       const payload = {
         movieId: selectedMovie,
         showsInput,
         showPrice: Number(showPrice)
-
       }
-      const { data } = axios.post('/api/show/add', payload, { headers: { Authorization: `Bearer ${await getToken()}` } })
+
+      const { data } = await axios.post('/api/show/add', payload, {
+        headers: { Authorization: `Bearer ${await getToken()}` }
+      })
+
       if (data.success) {
         toast.success(data.message)
         setSelectedMovie(null)
@@ -79,30 +96,27 @@ const AddShows = () => {
         toast.error(data.message)
       }
     } catch (error) {
-      console.error("sumbission error:", error)
-      toast.error('try again')
+      console.error("Submission error:", error)
+      toast.error('Try again')
     }
 
     setAddingShow(false)
   }
 
+  if (!nowPlayingMovies.length) return <Loading />
 
-
-  useEffect(() => {
-    if (user) fetchNowPlayingMovies()
-  }, [user])
-
-  return nowPlayingMovies.length > 0 ? (
-    <>
+  return (
+    <div className="p-4">
       <Title text1="Add" text2="Shows" />
 
-      <p className='mt-10 text-lg font-medium'>Now Playing Movies</p>
-      <div className='overflow-x-auto pb-4'>
-        <div className='flex flex-wrap gap-4 mt-4'>
+      {/* Movies */}
+      <p className='mt-6 text-lg font-medium'>Now Playing Movies</p>
+      <div className='overflow-x-auto py-4'>
+        <div className='flex flex-wrap gap-4'>
           {nowPlayingMovies.map((movie) => (
             <div
               key={movie.id}
-              className='relative cursor-pointer transition-transform duration-300 hover:-translate-y-1 flex-shrink-0 w-[140px] sm:w-[180px] md:w-[200px]'
+              className={`relative cursor-pointer transition-transform duration-300 hover:-translate-y-1 flex-shrink-0 w-[140px] sm:w-[180px] md:w-[200px]`}
               onClick={() => setSelectedMovie(movie.id)}
             >
               <div className='relative rounded-lg overflow-hidden'>
@@ -114,7 +128,7 @@ const AddShows = () => {
                 <div className='text-sm flex items-center justify-between p-2 bg-black/70 w-full absolute bottom-0 left-0'>
                   <p className='flex items-center gap-1 text-gray-400'>
                     <StarIcon className='w-4 h-4 text-primary fill-primary' />
-                    {movie.vote_average ? movie.vote_average.toFixed(1) : "N/A"}
+                    {movie.vote_average?.toFixed(1) || "N/A"}
                   </p>
                   <p className='text-gray-300'>{kConvert(movie.vote_count)} Votes</p>
                 </div>
@@ -132,13 +146,13 @@ const AddShows = () => {
       </div>
 
       {/* Show Price */}
-      <div className='mt-8 w-full sm:w-1/2'>
+      <div className='mt-6 w-full sm:w-1/2'>
         <label className='block text-sm font-medium mb-2'>Show Price</label>
         <div className='flex items-center gap-2 border border-gray-600 px-3 py-2 rounded-md w-full'>
           <span className='text-gray-400 text-sm'>{currency}</span>
           <input
-            min={0}
             type='number'
+            min={0}
             value={showPrice}
             onChange={(e) => setShowPrice(e.target.value)}
             placeholder='Enter show price'
@@ -147,7 +161,7 @@ const AddShows = () => {
         </div>
       </div>
 
-      {/* Date-Time Selection */}
+      {/* Date-Time */}
       <div className='mt-6 w-full sm:w-1/2'>
         <label className='block text-sm font-medium mb-2'>Select Date and Time</label>
         <div className='flex flex-col sm:flex-row gap-2 sm:gap-5 border border-gray-600 p-2 rounded-lg'>
@@ -166,7 +180,7 @@ const AddShows = () => {
         </div>
       </div>
 
-      {/* Display selected date-time */}
+      {/* Display Selected Date-Time */}
       {Object.keys(dateTimeSelection).length > 0 && (
         <div className='mt-6'>
           <h2 className='mb-2 font-medium'>Selected DATE-TIME</h2>
@@ -176,10 +190,7 @@ const AddShows = () => {
                 <div className='font-medium'>{date}</div>
                 <div className='flex flex-wrap gap-2 mt-1 text-sm'>
                   {times.map((time) => (
-                    <div
-                      key={time}
-                      className='border border-primary px-2 py-1 flex items-center rounded'
-                    >
+                    <div key={time} className='border border-primary px-2 py-1 flex items-center rounded'>
                       <span>{time}</span>
                       <DeleteIcon
                         onClick={() => handleRemoveTime(date, time)}
@@ -195,12 +206,15 @@ const AddShows = () => {
         </div>
       )}
 
-      <button onClick={handleSubmit} disabled={addingShow} className='bg-primary text-white px-8 py-2 mt-6 rounded hover:bg-primary/90 w-full sm:w-auto transition-all'>
-        Add Show
+      {/* Submit Button */}
+      <button
+        onClick={handleSubmit}
+        disabled={addingShow}
+        className='bg-primary text-white px-8 py-2 mt-6 rounded hover:bg-primary/90 w-full sm:w-auto transition-all'
+      >
+        {addingShow ? "Adding..." : "Add Show"}
       </button>
-    </>
-  ) : (
-    <Loading />
+    </div>
   )
 }
 
